@@ -1,0 +1,80 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test checkpoints
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Run checkpoint tests
+        env:
+          AGENT_API_KEY: ci-dummy
+          REDIS_URL: "fake://"
+        run: >-
+          python -m pytest tests/
+          --ignore=tests/test_cp5.py
+          --ignore=tests/test_bonus_cicd.py
+
+  build:
+    name: Build Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Build image
+        run: docker build -t day12-agent:${{ github.sha }} .
+
+  deploy:
+    name: Deploy to Railway
+    needs: [test, build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install Railway CLI
+        run: npm install --global @railway/cli@5.62.1
+
+      - name: Deploy
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: >-
+          railway up --ci
+          --project 4c03e1c0-56eb-4b83-bc2d-0c0c59b8e2b8
+          --environment b9608ec5-ea40-4f1d-8e3a-beaa895c2618
+          --service 292e6e21-ec39-4e62-837e-3283e491af1a
+
+      - name: Smoke test deployed service
+        env:
+          PUBLIC_URL: https://k4-l3a-day12-nguyenngocminh-2a202602653-cloudser-production.up.railway.app
+        run: |
+          for attempt in $(seq 1 12); do
+            if curl --fail --silent --show-error "$PUBLIC_URL/health"; then
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Health check did not become healthy" >&2
+          exit 1
