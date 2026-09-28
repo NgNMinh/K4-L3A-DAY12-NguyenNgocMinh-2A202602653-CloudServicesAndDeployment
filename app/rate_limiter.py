@@ -30,7 +30,7 @@ class RateLimiter:
     def hit_count(self, user_id: str, now: float | None = None) -> int:
         """Số request của user trong ``WINDOW_SECONDS`` giây gần nhất.
 
-        TODO (CP3):
+        Các bước đếm:
           1. ``now = now if now is not None else time.time()``
           2. Xóa các entry cũ hơn cửa sổ:
              ``self.client.zremrangebyscore(key, 0, now - WINDOW_SECONDS)``
@@ -44,7 +44,7 @@ class RateLimiter:
     def check(self, user_id: str, now: float | None = None) -> None:
         """Cho qua nếu còn quota, ngược lại raise 429.
 
-        TODO (CP3):
+        Các bước kiểm tra và ghi nhận:
           1. ``now = now if now is not None else time.time()``
           2. Gọi ``self.hit_count(user_id, now)``.
           3. Nếu số đó ``>= self.limit`` → raise

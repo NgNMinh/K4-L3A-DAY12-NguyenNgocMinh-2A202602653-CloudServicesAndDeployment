@@ -15,7 +15,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Toàn bộ cấu hình của service.
 
-    TODO (CP1): khai báo các trường dưới đây. pydantic-settings tự đọc biến
+    Các trường dưới đây được pydantic-settings đọc từ biến môi trường
     môi trường theo tên trường (không phân biệt hoa thường), nên trường
     ``agent_api_key`` sẽ lấy giá trị từ biến ``AGENT_API_KEY``.
 
@@ -40,7 +40,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # TODO (CP1): khai báo 6 trường theo bảng trên, ví dụ:
+    # Sáu trường cấu hình theo bảng ở trên.
     port: int = 8000
     agent_api_key: str
     redis_url: str = "redis://localhost:6379/0"
